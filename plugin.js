@@ -81,7 +81,27 @@ class SefariaPlugin extends HTMLElement {
     }
   }
 
+  /**
+ * Extracts all the English strings from your nested translation data
+ * and concatenates them into one continuous text.
+ *
+ * @param {any[]} data  The array you showed (with the translations in data[0])
+ * @returns {string}    All English parts, trimmed and joined with spaces
+ */
+  extractEnglish(data) {
+    if (!Array.isArray(data) || data.length === 0) return '';
+    const entries = data[0];                 // the array of translation‐tuples
+    if (!Array.isArray(entries)) return '';
+
+    return entries
+      .map(item => item[0])                  // grab the English string at index 0
+      .filter(text => typeof text === 'string') // sanity check
+      .map(text => text.trim())             // remove extra whitespace
+      .join(' ');                            // glue them together with spaces
+  }
+
   async promptLLM(text, query) {
+
     // Use Google Translate API instead of OpenAI
     const url =
       "https://translate.googleapis.com/translate_a/single" +
@@ -93,7 +113,8 @@ class SefariaPlugin extends HTMLElement {
     try {
       const res = await fetch(url);
       const data = await res.json();
-      return data[0][0][0];
+
+      return this.extractEnglish(data) || 'Translation not available.';
     } catch (error) {
       return 'Translation error.';
     }
