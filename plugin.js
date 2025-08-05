@@ -4,9 +4,6 @@ class SefariaPlugin extends HTMLElement {
     this.attachShadow({ mode: 'open' });
 
     // State variables
-    const a1 = 'eGFpLVJqcm1BVjBQcXNSa0NHTU1uakN4Q3RrcjdJb2Z5NTdjNUN'
-    const a2 = '1a0xIckhSd09pc1J3TW9qZTlhNGNsVDlnMFJBSFZHd3ZFY1RZT0lXS1VqbkVj'
-    this.b = atob(`${a1}${a2}`)
     this.counter = 0
     this.uiState = 0
     this.query = ''
@@ -85,32 +82,21 @@ class SefariaPlugin extends HTMLElement {
   }
 
   async promptLLM(text, query) {
-    const body = {
-      messages: [
-        {
-          role: "system",
-          content: "You are a translator"
-        },
-        {
-          role: "user",
-          content: `Please translate the following text from ${query}": ${text}`
-        }
-      ],
-      "model": "grok-beta",
-      "stream": false,
-      "temperature": 0
+    // Use Google Translate API instead of OpenAI
+    const url =
+      "https://translate.googleapis.com/translate_a/single" +
+      "?client=gtx" +
+      "&sl=he" +
+      "&tl=en" +
+      "&dt=t" +
+      "&q=" + encodeURIComponent(text);
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      return data[0][0][0];
+    } catch (error) {
+      return 'Translation error.';
     }
-    const request = new Request("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.b}`
-      },
-      body: JSON.stringify(body),
-    });
-    const response = await fetch(request)
-    const data = await response.json()
-    return data.choices[0].message.content
   }
 
   async renderResults(text, query) {
